@@ -1,4 +1,4 @@
-package com.company;
+package com.birdbrain;
 
 /**
  * This class extends the Microbit class to incorporate functions to control the inputs and outputs

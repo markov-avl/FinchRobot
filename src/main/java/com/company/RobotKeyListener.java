@@ -1,5 +1,7 @@
 package com.company;
 
+import com.birdbrain.Finch;
+
 import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.Label;
@@ -19,7 +21,6 @@ public class RobotKeyListener implements KeyListener {
     private int moveState = RobotKeyListener.STAYING;
     private int turnState = RobotKeyListener.STAYING;
 
-    @Override
     public void keyTyped(KeyEvent e) {
 
     }
@@ -40,7 +41,6 @@ public class RobotKeyListener implements KeyListener {
         finch.setMotors(-2 * speed, -speed);
     }
 
-    @Override
     public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_G) {
             System.exit(0);
@@ -87,7 +87,6 @@ public class RobotKeyListener implements KeyListener {
         System.out.println("The key Pressed was: " + e.getKeyChar());
     }
 
-    @Override
     public void keyReleased(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_W || e.getKeyCode() == KeyEvent.VK_S) {
             moveState = STAYING;

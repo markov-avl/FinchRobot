@@ -1,10 +1,11 @@
-package com.company;
+package com.birdbrain;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Arrays;
 
 /**
  * This is an abstract class that is inherited by Microbit.java, Hummingbird.java and Finch.java.
@@ -53,11 +54,7 @@ abstract class Robot {
                  .append(deviceInstance)).toString();
 
         String stringResponse = sendHttpRequest(testURL);
-        if (stringResponse.equals("Not Connected")) {
-            return false;
-        } else {
-            return true;
-        }
+        return !stringResponse.equals("Not Connected");
     }
     
     /* This function checks whether an input parameter is within the given bounds. If not, it prints
@@ -190,7 +187,7 @@ abstract class Robot {
         		System.out.println("Warning: Many special characters cannot be printed on the LED display");
         	}
         }
-    	for (int i = 0; i < displayStatus.length; i++) displayStatus[i] = false;
+        Arrays.fill(displayStatus, false);
  			
     	// Get rid of spaces
     	message = message.replace(" ", "%20");

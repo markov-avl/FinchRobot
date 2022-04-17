@@ -1,4 +1,4 @@
-package com.company;
+package com.birdbrain;
 
 /**
  * This class extends the Robot class to incorporate functions to control the inputs and outputs
@@ -32,7 +32,7 @@ public class Finch extends Robot {
      * The letter that identifies the Hummingbird device is assigned by the BlueBird Connector.
      */
     public Finch(String device) {
-        if (!((device == "A")||(device == "B")||(device == "C"))) {
+        if (!device.equals("A") && !device.equals("B") && !device.equals("C")) {
             System.out.println("Error: Device must be A, B, or C.");
             System.exit(0);
         } else {
@@ -72,8 +72,6 @@ public class Finch extends Robot {
     /**
      * Formats the direction string for sending to the bluebird connector.
      * If the selection made is not acceptable, returns 'Neither'.
-     * @param direction
-     * @return
      */
     private String formatForwardBackward(String direction) {
         switch (direction) {
@@ -96,8 +94,6 @@ public class Finch extends Robot {
     /**
      * Formats the direction string for sending to the bluebird connector.
      * If the selection made is not acceptable, returns 'Neither'.
-     * @param direction
-     * @return
      */
     private String formatRightLeft(String direction) {
         switch (direction) {

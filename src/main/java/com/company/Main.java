@@ -1,46 +1,68 @@
 package com.company;
 
+
 import com.birdbrain.Finch;
 import com.studiohartman.jamepad.ControllerManager;
 import com.studiohartman.jamepad.ControllerState;
-import com.studiohartman.jamepad.tester.ControllerTester;
+
 
 public class Main {
+    // Менеджер геймпадов (обслуживает до 4 подключённых геймпадов)
+    private ControllerManager controllers;
+    // Робот Финч
+    private Finch finch;
+    // Стики и триггеры не всегда показывают, что они находятся в начальном положении, даже если это так. Поэтому
+    // введена мера погрешности, пресечение которой позволяет считать стик или триггер активным
+    private final float accuracy = 0.15f;
 
-    public static void main(String[] args) {
-//        ControllerTester.run();
-        listen();
+    public void main(String[] args) {
+        // Позволяет проверить геймпад на корректную работу
+        // ControllerTester.run();
+        run();
     }
 
-    public static void listen() {
-        ControllerManager controllers = new ControllerManager();
-        controllers.initSDLGamepad();
+    public void run() {
+        initializeGamepad();
+        initializeFinch();
 
-        Finch finch = new Finch("A");
+        System.out.println("Ready");
 
-        System.out.println("Ready to listen");
+        // Вычисленное роботом расстояние до ближайшего объекта в последний раз (255, потому что это максимум)
+        // TODO: хотелось бы без таких тупых переменных обойтись
+        int previousDistance = 255;
 
-        while (true) {
+        ControllerState controllerState;
+
+        // TODO: очень грязный код
+        do {
+            // Получает статус геймпада, с помощью которого можно узнать зажатые кнопки
             controllers.update();
-            ControllerState state = controllers.getState(0);
+            controllerState = controllers.getState(0);
 
-            float D = state.rightTrigger - state.leftTrigger;
-            float x = state.leftStickX;
+            // Вычисленное роботом расстояние до ближайшего объекта в данный момент
+            int distance = finch.getDistance();
 
-            System.out.println("RT: " + state.rightTrigger + " | LR: " + state.leftTrigger + " | X: " + state.leftStickX);
+            /*
+             * Отображает направление робота (ВЛЕВО-ВПРАВО) в числовом формате:
+             * x > 0 -> левый стик направлен направо, робот двигается по направлению y и направо (сила учитывается)
+             * x = 0 -> левый стик находится в начальном состоянии, робот двигается по направлению y
+             * x < 0 -> левый стик направлен налево, робот двигается по направлению y и налево (сила учитывается)
+             */
+            float x = Math.abs(controllerState.leftStickX) >= accuracy ? controllerState.leftStickX : 0;
 
-            if (state.leftTrigger > 0.1 || state.rightTrigger > 0.1) {
-                // TODO: при зажатых LT + RT вообще не двигается, даже если крутить стик
-                // TODO: виляет, если отпущен стик (погрешность видимо играет)
-                finch.setMotors(Math.min(1 + x, 1) * D * 100, Math.min(1 - x, 1) * D * 100);
-                System.out.println("L: " + (Math.min(1 + x, 1) * D * 100) + " | R: " + (Math.min(1 - x, 1) * D * 100));
-            } else {
-                finch.setMotors(0, 0);
-            }
+            /*
+             * Отображает направление робота (ВПЕРЕД-НАЗАД) в числовом формате:
+             * y > 0 -> RT зажат сильнее LT, робот двигается вперед
+             * y = 0 -> LT и RT зажаты с одинаковой силой, робот не двигается
+             * y < 0 -> LT зажат сильнее RT, робот двигается назад
+             */
+            float y = controllerState.rightTrigger - controllerState.leftTrigger;
 
-            if (state.a) {
-                break;
-            }
+            // Проверка ситуаций
+            checkMovement(controllerState, x, y);
+            checkObstacle(y, distance, previousDistance);
+
+            previousDistance = distance;
 
             try {
                 Thread.sleep(30);
@@ -48,7 +70,55 @@ public class Main {
                 e.printStackTrace();
             }
         }
+        // Пока кнопка A служит триггером для выхода из программы
+        while (!controllerState.a);
 
+        turnFinchOff();
+    }
+
+    private void initializeGamepad() {
+        controllers = new ControllerManager();
+        controllers.initSDLGamepad();
+    }
+
+    private void initializeFinch() {
+        // Если робот изначально не подключен, эта строчка вызовет исключение
+        finch = new Finch();
+    }
+
+    private void turnFinchOff() {
+        finch.stopAll();
         finch.disconnect();
+    }
+
+    private void checkMovement(ControllerState controllerState, float x, float y) {
+        float absX = Math.abs(x);
+        float absY = Math.abs(y);
+
+        // Срабатывает, если зажат хотя бы один из триггеров
+        if (controllerState.leftTrigger > accuracy || controllerState.rightTrigger > accuracy) {
+            // Срабатывает, если один из триггеров зажат сильнее другого
+            if (absY > accuracy) {
+                finch.setMotors(Math.min(1 + x, 1) * y * 100, Math.min(1 - x, 1) * y * 100);
+            }
+            // Срабатывает, когда одновременно зажаты LT и RT с одинаковой силой (с погрешностью). В этом случае робот
+            // должен крутиться вокруг своей оси, если левый стик находится не в начальном положении
+            else {
+                double rotationStrength = (absX > 0 ? absX + controllerState.leftTrigger : 0) * 100;
+                rotationStrength = x > 0 ? rotationStrength : -rotationStrength;
+                finch.setMotors(rotationStrength, -rotationStrength);
+            }
+        } else {
+            finch.setMotors(0, 0);
+        }
+    }
+
+    private void checkObstacle(float y, int distance, int previousDistance) {
+        float absY = Math.abs(y);
+
+        // TODO: робот очень криво считает дистанцию, да и вообще условие вибрации кривое
+        if (distance <= 5 && previousDistance > distance) {
+            controllers.doVibration(0, absY, absY, (int) (absY * 200));
+        }
     }
 }

@@ -64,9 +64,8 @@ public class Finch extends Robot {
         } else if (stringResponse.equals("Not Connected")) {
             System.out.println("Error: Device " + deviceInstance + " is not connected.");
             return false;
-        } else {
-            return true;
         }
+        return true;
     }
 
     /**

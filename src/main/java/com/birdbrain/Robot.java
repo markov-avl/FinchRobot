@@ -32,9 +32,9 @@ abstract class Robot {
     private static final String LOGO_DOWN = "Logo%20Down";
     private static final String SHAKE = "Shake";
 
-    private String outputError = "Error: Could not set output on the device ";
-	private String inputError = "Error: Could not read sensor on the device ";
-	
+    private final String outputError = "Error: Could not set output on the device ";
+	private final String inputError = "Error: Could not read sensor on the device ";
+
 	protected boolean[] displayStatus = new boolean[25];
 
 	protected String magRequest = "Magnetometer";
@@ -87,7 +87,7 @@ abstract class Robot {
     protected String getUrl(String[] args) {
         StringBuilder resultUrl = new StringBuilder(baseUrl);
         for (String arg : args) {
-            resultUrl.append(arg + "/");
+            resultUrl.append(arg).append("/");
         }
         String url = resultUrl.toString();
         return url.substring(0, url.length() - 1); //remove the trailing '/'
@@ -135,7 +135,7 @@ abstract class Robot {
             disconnect();
         }
         //If too many requests get sent too quickly, macOS gets overwhelmed and starts to insert pauses.
-        while(System.currentTimeMillis() < requestStartTime + 5) {}
+        while (System.currentTimeMillis() < requestStartTime + 5) {}
 
         return responseString;
 
@@ -151,8 +151,7 @@ abstract class Robot {
     protected double httpRequestInDouble(String URLRequest) {
         String stringResponse = sendHttpRequest(URLRequest);
         try {
-            double value = Double.parseDouble(stringResponse);
-            return value;
+            return Double.parseDouble(stringResponse);
         } catch(Exception e) {
             System.out.println("Error: " + stringResponse);
             return -1;
@@ -195,9 +194,10 @@ abstract class Robot {
     	// Build http request
         StringBuilder resultUrl = new StringBuilder(baseUrl);
         String printUrl = (resultUrl.append("out/")
-                    .append("print/")
-                    .append(message + "/")
-                    .append(deviceInstance)).toString();
+                .append("print/")
+                .append(message)
+                .append("/")
+                .append(deviceInstance)).toString();
          httpRequestOut(printUrl);
             
     }
@@ -225,18 +225,14 @@ abstract class Robot {
          * also ensuring that the user only used 0 and 1.
          */
     	for (int i = 0; i < ledLen; i++){
-    		if (ledValues[i] == 1)
-                displayStatus[i] = true;
-            else 
-                displayStatus[i] = false;
+            displayStatus[i] = ledValues[i] == 1;
                 
-        }      
-    		
-        resultUrl = resultUrl.append("out/")
-                    .append("symbol/").append(deviceInstance.toString()+"/");
-          
+        }
+
+        resultUrl.append("out/").append("symbol/").append(deviceInstance).append("/");
+
         for (int i = 0; i < ledLen; i++) {
-            resultUrl = resultUrl.append(String.valueOf(displayStatus[i]) + "/");
+            resultUrl.append(displayStatus[i]).append("/");
         }
            
         String symbolUrl = resultUrl.append(deviceInstance).toString();
@@ -263,16 +259,12 @@ abstract class Robot {
 		int position = (row - 1)*5 + (column-1);
 		/* For the http request, we need to convert the 0 or 1 to a boolean. We can do this warning if the user didn't use 0 or 1 for the value
          */
-		if (value == 1)
-			displayStatus[position] = true;
-		else 
-			displayStatus[position] = false;
-		
-        resultUrl = resultUrl.append("out/")
-                .append("symbol/").append(deviceInstance.toString()+"/");
-      
-        for (int i = 0; i < displayStatus.length; i++) {
-            resultUrl = resultUrl.append(String.valueOf(displayStatus[i]) + "/");
+        displayStatus[position] = value == 1;
+
+        resultUrl.append("out/").append("symbol/").append(deviceInstance).append("/");
+
+        for (boolean status : displayStatus) {
+            resultUrl.append(status).append("/");
         }
        
         String symbolUrl = resultUrl.append(deviceInstance).toString();
@@ -305,8 +297,10 @@ abstract class Robot {
         
         StringBuilder resultUrl = new StringBuilder(baseUrl);
         String acclUrl = (resultUrl.append("in/")
-                .append(accelRequest + "/")
-                .append(dir + "/")
+                .append(accelRequest)
+                .append("/")
+                .append(dir)
+                .append("/")
                 .append(deviceInstance)).toString();
 
         return httpRequestInDouble(acclUrl);     
@@ -320,8 +314,10 @@ abstract class Robot {
     private double getMagnetometerValInDirs(String dir) {
         StringBuilder resultUrl = new StringBuilder(baseUrl);
         String magUrl = (resultUrl.append("in/")
-                .append(magRequest + "/")
-                .append(dir + "/")
+                .append(magRequest)
+                .append("/")
+                .append(dir)
+                .append("/")
                 .append(deviceInstance)).toString();
 
         return httpRequestInDouble(magUrl);
@@ -368,7 +364,8 @@ abstract class Robot {
         
         StringBuilder resultUrl = new StringBuilder(baseUrl);
         String compassUrl = (resultUrl.append("in/")
-                .append(compassRequest + "/")
+                .append(compassRequest)
+                .append("/")
                 .append(deviceInstance)).toString();
 
         return (int) httpRequestInDouble(compassUrl);
@@ -392,7 +389,8 @@ abstract class Robot {
         StringBuilder resultUrl = new StringBuilder(baseUrl);
         String buttonUrl = (resultUrl.append("in/")
                 .append("button/")
-                .append(button + "/")
+                .append(button)
+                .append("/")
                 .append(deviceInstance)).toString();
         
         return httpRequestInBoolean(buttonUrl);
@@ -436,7 +434,8 @@ abstract class Robot {
         StringBuilder resultUrl = new StringBuilder(baseUrl);
         String orientationUrl = (resultUrl.append("in/")
                 .append("orientation/")
-                .append(orientation + "/")
+                .append(orientation)
+                .append("/")
                 .append(deviceInstance)).toString();
       
         return httpRequestInBoolean(orientationUrl);  
@@ -495,7 +494,7 @@ abstract class Robot {
     /* stopAll() turns off all the outputs. */
     public void stopAll() {
     
-    	pause(0.1);         // Hack to give stopAll() time to act before the end of a program
+    	pause(0.1); // Hack to give stopAll() time to act before the end of a program
 	
 		// Build http request to turn off all the outputs
         StringBuilder resultUrl = new StringBuilder(baseUrl);
@@ -506,6 +505,6 @@ abstract class Robot {
         httpRequestOut(stopUrl);
 
         //Set the current display status to all off
-        for (int i = 0; i < displayStatus.length; i++) displayStatus[i] = false;
+        Arrays.fill(displayStatus, false);
     }
 }

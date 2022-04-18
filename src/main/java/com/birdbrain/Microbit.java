@@ -24,9 +24,8 @@ public class Microbit extends Robot {
 		} else if (stringResponse.equals("Not Connected")) {
 			System.out.println("Error: Device " + deviceInstance + " is not connected.");
 			return false;
-		} else {
-			return true;
 		}
+		return true;
 	}
    
 
@@ -45,7 +44,7 @@ public class Microbit extends Robot {
      * @param device the input device that will be specified by the user.
      */
     public Microbit(String device) {
-    	if (!((device == "A")||(device == "B")||(device == "C"))) {
+    	if (!device.equals("A") && !device.equals("B") && !device.equals("C")) {
         	System.out.println("Error: Device must be A, B, or C.");
         	System.exit(0);
         } else {

@@ -15,10 +15,10 @@ public class Main {
     // введена мера погрешности, пресечение которой позволяет считать стик или триггер активным
     private final float accuracy = 0.15f;
 
-    public void main(String[] args) {
+    public static void main(String[] args) {
         // Позволяет проверить геймпад на корректную работу
         // ControllerTester.run();
-        run();
+        new Main().run();
     }
 
     public void run() {
@@ -92,20 +92,17 @@ public class Main {
     }
 
     private void checkMovement(ControllerState controllerState, float x, float y) {
-        float absX = Math.abs(x);
-        float absY = Math.abs(y);
-
         // Срабатывает, если зажат хотя бы один из триггеров
         if (controllerState.leftTrigger >= accuracy || controllerState.rightTrigger >= accuracy) {
             // Срабатывает, если один из триггеров зажат сильнее другого
-            if (absY >= accuracy) {
+            if (Math.abs(y) >= accuracy) {
                 finch.setMotors(Math.min(1 + x, 1) * y * 100, Math.min(1 - x, 1) * y * 100);
             }
             // Срабатывает, когда одновременно зажаты LT и RT с одинаковой силой (с погрешностью). В этом случае робот
             // должен крутиться вокруг своей оси, если левый стик находится не в начальном положении
             else {
-                double rotationStrength = (absX > 0 ? absX + controllerState.leftTrigger : 0) * 100;
-                rotationStrength = x > 0 ? rotationStrength : -rotationStrength;
+                // Умножается на 99, потому что иногда abs(x) может быть чуть больше единицы
+                double rotationStrength = (Math.abs(x) > 0 ? x : 0) * 99;
                 finch.setMotors(rotationStrength, -rotationStrength);
             }
         } else {
